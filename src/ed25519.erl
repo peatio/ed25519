@@ -5,6 +5,7 @@
 	 public_key/1,
 	 sign/2,
 	 sign_bytom/2,
+     sign_mixin/2,
 	 verify/3]).
 
 -type seed() :: binary().
