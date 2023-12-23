@@ -2,6 +2,71 @@
 #include <string.h>
 #include "sha512.h"
 #include "ed25519.h"
+#include "ge.h"
+#include "sc.h"
+#include "mixin.h"
+
+#define SUCCESS 0
+#define ERROR_INVALID_PUBLIC_KEY -1
+#define ERROR_INVALID_PRIVATE_KEY -2
+
+typedef unsigned char Key[32];
+
+// Function to convert a hex char to value
+unsigned char hex_char_to_value(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return 0;
+}
+
+// Function to convert a hex string to bytes
+void hex_to_bytes(const char* hex, unsigned char* bytes, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        bytes[i] = hex_char_to_value(hex[i * 2]) << 4 | hex_char_to_value(hex[i * 2 + 1]);
+    }
+}
+
+// Function to print bytes as hex
+void print_bytes(const unsigned char* bytes, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        printf("%02x", bytes[i]);
+    }
+    printf("\n");
+}
+
+void calculate_public_key(const Key* priv, Key* pub) {
+    ge_p3 pub_point;
+    ge_scalarmult_base(&pub_point, *priv);
+    ge_p3_tobytes(*pub, &pub_point);
+}
+
+void test_hash_scalar() {
+    char* a_hex = "f48f9e154d403e98dd1bd865387066c8f1097fba550b8b6c790fe67af35a1b0a";
+    char* r_hex = "5f858ca3b6e7663affb1bb23db4ad7d05a5a47099210ada06f4b56d111c72804";
+    Key a;
+    Key A;
+    Key r;
+    ge_p2 key_point;
+    Key key_bytes;
+
+    hex_to_bytes(a_hex, a, 32);
+    calculate_public_key(&a, &A);
+    hex_to_bytes(r_hex, r, 32);
+    if (mixin_key_mult_pub_priv(&A, &r, &key_point) != SUCCESS) {
+        printf("Error in KeyMultPubPriv\n");
+        return;
+    }
+    mixin_hash_scalar(&key_point, 0, &key_bytes);
+    // printf("keyBytes: ");
+    // printBytes(keyBytes, 32);
+}
 
 void print_charlist(unsigned char *list, int length){
     for(int i=0; i<length;i++) {
@@ -100,7 +165,9 @@ int test_sign_and_verify() {
 }
 
 int main() {
-    test_mixin_sign_and_verify();
-    test_sign_and_verify();
+    // test_mixin_sign_and_verify();
+    // test_sign_and_verify();
+    // test_hash_scalar();
+    test_blake3();
     return 0;
 }

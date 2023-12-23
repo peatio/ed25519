@@ -13,6 +13,10 @@ ERL_NIF_TERM ed25519_sign_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
 ERL_NIF_TERM ed25519_sign_bytom_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM ed25519_sign_mixin_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM ed25519_verify_sig(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
+// ---- MIXIN ----
+// ERL_NIF_TERM ed25519_mixin_blake3(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+
 //ERL_NIF_TERM ed25519_verify_sig(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 //ERL_NIF_TERM ed25519_update(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 //ERL_NIF_TERM ed25519_final(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
@@ -32,6 +36,7 @@ static ErlNifFunc nif_funcs[] =
 	{"public_key", 1, ed25519_derive_public_key},
 	{"sign", 2, ed25519_sign_msg},
 	{"sign_bytom", 2, ed25519_sign_bytom_msg},
+    // {"mixin_blake3", 2, ed25519_mixin_blake3}
 	{"sign_mixin", 2, ed25519_sign_mixin_msg},
 	{"verify", 3, ed25519_verify_sig}
 };
