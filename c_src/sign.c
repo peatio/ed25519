@@ -39,7 +39,7 @@ int ed25519_sign(unsigned char *signature, const unsigned char *message, size_t 
     Sha512Update(&hash, signature, 32);
     Sha512Update(&hash, private_key+32, 32);
     Sha512Update(&hash, message, message_len);
-    Sha512Finalise(&hash, hram);
+    Sha512Finalise(&hash, (SHA512_HASH *)hram);
 
     sc_reduce(hram);
     sc_muladd(signature + 32, hram, expanded_secret_key, reduce);
@@ -78,7 +78,7 @@ int ed25519_sign_bytom(unsigned char *signature, const unsigned char *message, s
     ge_p3_tobytes(encodedR, &R);
 
     unsigned char public_key[32];  //private_key to publicKey
-    ed25519_public_key(public_key, private_key);
+    ed25519_public_key(public_key, (unsigned char *)private_key);
     Sha512Initialise(&hash);
     Sha512Update(&hash, encodedR, 32);
     Sha512Update(&hash, public_key, 32);
