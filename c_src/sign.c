@@ -2,6 +2,7 @@
 #include "sha512.h"
 #include "ge.h"
 #include "sc.h"
+#include <string.h>
 
 
 int ed25519_sign(unsigned char *signature, const unsigned char *message, size_t message_len,  const unsigned char *private_key) {
@@ -100,6 +101,66 @@ int ed25519_sign_bytom(unsigned char *signature, const unsigned char *message, s
     for( int j=0; j<32; j++) {
         signature[j + 32] = s[j];
     }
+
+    return 0;
+}
+
+int ed25519_sign_mixin(unsigned char *signature, const unsigned char *message, size_t message_len,  const unsigned char *secret) {
+    Sha512Context hash;
+    unsigned char digest1[64];
+    unsigned char messageDigest[64];
+    unsigned char hramDigest[64];
+    SHA512_HASH digest;
+    ge_p3 R;
+    unsigned char z[32];
+    unsigned char x[32];
+    unsigned char y[32];
+    unsigned char s[32];
+
+    unsigned char *private_key = secret + 32;
+    unsigned char *public_key = secret;
+
+    // Compute digest1
+    Sha512Initialise(&hash);
+    Sha512Update(&hash, private_key, 32);
+    Sha512Finalise(&hash, &digest);
+    memmove(digest1, digest.bytes, 64);
+
+    // Compute messageDigest
+    Sha512Initialise(&hash);
+    Sha512Update(&hash, digest1 + 32, 32);
+    Sha512Update(&hash, message, 32); // Assuming message is 32 bytes
+    Sha512Finalise(&hash, &digest);
+    memmove(messageDigest, digest.bytes, 64);
+
+    // Compute z
+    sc_reduce(messageDigest);
+    memmove(z, messageDigest, 32);
+
+    // Compute R
+    ge_scalarmult_base(&R, z);
+    ge_p3_tobytes(signature, &R);
+
+    // Compute hramDigest
+    Sha512Initialise(&hash);
+    Sha512Update(&hash, signature, 32);
+    Sha512Update(&hash, public_key, 32); // Assuming public key is first half of secret
+    Sha512Update(&hash, message, 32); // Assuming message is 32 bytes
+    Sha512Finalise(&hash, &digest);
+    memmove(hramDigest, digest.bytes, 64);
+
+    // Compute x
+    sc_reduce(hramDigest);
+    memmove(x, hramDigest, 32);
+
+    // Compute y
+    memmove(y, private_key, 32);
+
+    // Compute s
+    sc_muladd(s, x, y, z);
+
+    // Copy s into second half of signature
+    memmove(signature + 32, s, 32);
 
     return 0;
 }

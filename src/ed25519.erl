@@ -5,6 +5,7 @@
 	 public_key/1,
 	 sign/2,
 	 sign_bytom/2,
+     sign_mixin/2,
 	 verify/3]).
 
 -type seed() :: binary().
@@ -41,13 +42,13 @@ sign(_Message, _Secret) ->
 sign_bytom(_Message, _Secret) ->
 	erlang:nif_error({error, not_loaded}).
 
+-spec sign_mixin(message(), secret()) -> {ok, signature()}.
+sign_mixin(_Message, _Secret) ->
+	erlang:nif_error({error, not_loaded}).
 
 -spec verify(signature(), message(), public()) -> {ok, atom()}.
 verify(_Signature, _Message, _Public) ->
 	erlang:nif_error({error, not_loaded}).
-
-
-
 
 init() ->
 	SoName = case code:priv_dir(?APPNAME) of

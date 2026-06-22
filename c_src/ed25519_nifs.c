@@ -11,6 +11,7 @@ ERL_NIF_TERM ed25519_keypair_with_seed(ErlNifEnv* env, int argc, const ERL_NIF_T
 ERL_NIF_TERM ed25519_derive_public_key(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM ed25519_sign_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM ed25519_sign_bytom_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+ERL_NIF_TERM ed25519_sign_mixin_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM ed25519_verify_sig(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 //ERL_NIF_TERM ed25519_verify_sig(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 //ERL_NIF_TERM ed25519_update(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
@@ -31,6 +32,7 @@ static ErlNifFunc nif_funcs[] =
 	{"public_key", 1, ed25519_derive_public_key},
 	{"sign", 2, ed25519_sign_msg},
 	{"sign_bytom", 2, ed25519_sign_bytom_msg},
+	{"sign_mixin", 2, ed25519_sign_mixin_msg},
 	{"verify", 3, ed25519_verify_sig}
 };
 
@@ -194,6 +196,36 @@ ERL_NIF_TERM ed25519_sign_bytom_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM
 		return make_error_tuple(env, "signature_alloc_failed");
 	}
 	int result = ed25519_sign_bytom(signature.data, message.data, message.size, secret.data);
+	if(result!=0){
+        	return make_error_tuple(env, "ed25519_sign_msg_failed");
+	}else{
+		return enif_make_tuple2(env,
+				enif_make_atom(env, "ok"),
+				enif_make_binary(env, &signature));
+	}
+}
+
+ERL_NIF_TERM ed25519_sign_mixin_msg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+	ErlNifBinary signature;
+	ErlNifBinary message;
+	ErlNifBinary secret;
+	unsigned char public[PUBLIC_KEY_SIZE];
+
+	if((argc !=2)	|| (!enif_inspect_binary(env, argv[0], &message))
+			|| (!enif_inspect_binary(env, argv[1], &secret))
+			|| (secret.size != SECRET_KEY_SIZE)) {
+		return enif_make_badarg(env);
+	}
+
+	if (ed25519_public_key(public, secret.data) != 0) {
+		return make_error_tuple(env, "ed25519_public_key_failed");
+	}
+
+	if (!enif_alloc_binary(SIGNATURE_SIZE, &signature)) {
+		return make_error_tuple(env, "signature_alloc_failed");
+	}
+	int result = ed25519_sign_mixin(signature.data, message.data, message.size, secret.data);
 	if(result!=0){
         	return make_error_tuple(env, "ed25519_sign_msg_failed");
 	}else{
